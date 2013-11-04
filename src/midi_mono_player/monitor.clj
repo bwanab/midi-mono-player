@@ -35,13 +35,13 @@
                                           (config! t :value  (* 100 (:val val))))
                                         (concat event-key ek))
                             t))))]
-    (flow-panel :items items)))
+    (grid-panel :rows 1 :columns (count items) :border "" :items items)))
 
 
 (defn make-switches-panel
   [events]
   (let [items (for [[n p] events]
-                (-> (grid-panel :rows 2 :columns 1)
+                (-> (grid-panel  :rows 2 :columns 1)
                     (add! (label (str n ": " (:name p))))
                     (add! (let [t (text (str (:default p)))
                                 ek [:wx7-event (:symbol p)]]
@@ -50,14 +50,14 @@
                                           (text! t (str (:val val))))
                                         (concat event-key ek))
                             t))))]
-    (flow-panel :items items)))
+    (grid-panel :rows 1 :columns (count items) :border "" :items items)))
 
 (defn make-main-panel
   [discreet-cc-events pc-switches continuous-cc-events]
-  (-> (grid-panel :rows 3 :columns 1)
-      (add! (make-switches-panel discreet-cc-events))
-      (add! (make-switches-panel pc-switches))
-      (add! (make-continuous-vals-panel continuous-cc-events))))
+  (border-panel :north (-> (grid-panel :rows 3 :columns 1)
+                           (add! (make-switches-panel discreet-cc-events))
+                           (add! (make-switches-panel pc-switches)))
+                :center (make-continuous-vals-panel continuous-cc-events)))
 
 (defn make-frame
   [cc-events pc-switches]
@@ -65,15 +65,10 @@
     :title "WX7 Monitor"
     :size  [600 :by 600]
     :on-close :exit
-    :menubar (menubar :items [(menu :text "View" :items [(menu-item :class :refresh)])])
     :content (border-panel
-               :border 5
-               :hgap 5
-               :vgap 5
                :center (make-main-panel (filter #(= :discreet (:type (val %))) cc-events)
                                         pc-switches
-                                        (filter #(not= :discreet (:type (val %))) cc-events))
-               :south (label :id :status :text "Ready"))))
+                                        (filter #(not= :discreet (:type (val %))) cc-events)))))
 
 
 (defn monitor

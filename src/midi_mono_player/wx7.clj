@@ -51,7 +51,7 @@ offset, range, symbol and type to use when the event occurs "
                {num (merge p (munge-param p type))})))))
 
 (defn fire-event [s val]
-  (e/event  [:wx7-event s] {:val val}))
+  (e/event  [:wx7-event] {:type s :val val}))
 
 (defn control-vals [p amp]
   (let [s (:symbol p)

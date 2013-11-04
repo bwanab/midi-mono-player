@@ -20,6 +20,24 @@
 
 (def mono-player-events (atom {}))
 
+(defn make-continuous-vals-panel
+  [events]
+  (let [items (for [[n p] events]
+                (-> (grid-panel :rows 2 :columns 1)
+                    (add! (label (str n ": " (:name p))))
+                    (add! (let [t (progress-bar :orientation :vertical
+                                                :min (* 100 (:min p))
+                                                :max (* 100 (:max p))
+                                                :value (* 100 (:default p)))
+                                ek [:wx7-event (:symbol p)]]
+                            (e/on-event ek
+                                        (fn [val]
+                                          (config! t :value  (* 100 (:val val))))
+                                        (concat event-key ek))
+                            t))))]
+    (flow-panel :items items)))
+
+
 (defn make-switches-panel
   [events]
   (let [items (for [[n p] events]
@@ -39,7 +57,7 @@
   (-> (grid-panel :rows 3 :columns 1)
       (add! (make-switches-panel discreet-cc-events))
       (add! (make-switches-panel pc-switches))
-      (add! (make-switches-panel continuous-cc-events))))
+      (add! (make-continuous-vals-panel continuous-cc-events))))
 
 (defn make-frame
   [cc-events pc-switches]

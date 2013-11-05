@@ -1,13 +1,13 @@
 (ns midi-mono-player.monitor
   (:use [seesaw core]
-        [midi-mono-player wx7 test-wx7])
+        [midi-mono-player player test-wx7])
   (:require [overtone.libs.event :as e]))
 
 (native!)
 
 
 
-(def event-key [::midi-mono-player.wx7/wx7-event])
+(def event-key [::midi-mono-player.player/modo-midi-player-event])
 
 (def mono-player-events (atom {}))
 
@@ -45,7 +45,7 @@
 (defn make-frame
   [cc-events pc-switches]
   (frame
-    :title "WX7 Monitor"
+    :title "Midi Monitor"
     :size  [600 :by 600]
     :on-close :exit
     :content (border-panel
@@ -60,12 +60,12 @@
         pc-switches  (get-midi-defs play-fn (:program-change midi-map))]
     (invoke-later
      (-> (make-frame cc-events pc-switches) pack! show!)))
-  (e/on-event [:wx7-event]
+  (e/on-event [:modo-midi-player-event]
               (fn [val]
                 (when-let [e (get @mono-player-events (:type val))]
                   (case (:type e)
                     :continuous (config! (:widget e) :value  (* 100 (:val val)))
                     :discreet (text! (:widget e) (str (:val val))))))
-              (concat event-key [:wx7-event])))
+              (concat event-key [:modo-midi-player-event])))
 
-(monitor wx7mooger fcb-map)
+;(monitor wx7mooger fcb-map)

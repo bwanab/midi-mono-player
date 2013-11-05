@@ -1,6 +1,8 @@
-(ns midi-mono-player.core)
+(ns midi-mono-player.core
+  (:use [midi-mono-player player test-wx7 monitor profiles]))
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
+(defn -main
+  ([] (-main "wx7"))
+  ([profile]
+  (play wx7mooger (get profile-map (keyword profile)) fcb-map)
+  (monitor wx7mooger fcb-map)))

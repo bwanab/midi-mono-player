@@ -1,6 +1,6 @@
 (ns midi-mono-player.test-wx7
     (:use [overtone.live]
-          [midi-mono-player.wx7]))
+          [midi-mono-player player profiles]))
 
 (definst wx7mooger
   "Choose 0, 1, or 2 for saw, sin, or pulse"
@@ -54,7 +54,8 @@
                                [51, "osc2-level" :discreet]]
               :program-change [[0 "osc1"]
                                [1 "osc2"]]})
-(def player (yamaha-wx7 wx7mooger fcb-map))
+
+;(def player (play wx7mooger (:wx7 profile-map) fcb-map))
 
 (defn pctl [p c v]
   (ctl (:synth (val (first p))) c v))

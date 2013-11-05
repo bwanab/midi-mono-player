@@ -1,35 +1,11 @@
-(ns midi-mono-player.wx7
+(ns midi-mono-player.player
     (:use [overtone.studio.midi]
           [overtone.sc.node]
           [overtone.sc.dyn-vars])
     (:require [overtone.libs.event :as e]))
 
-"
-    (definst ding
-      [note 60 velocity 100 gate 1]
-      (let [freq (midicps note)
-            amp  (/ velocity 127.0)
-            snd  (sin-osc freq)
-            env  (env-gen (adsr 0.001 0.1 0.6 0.3) gate :action FREE)]
-        (* amp env snd)))
-"
 
-"
-central-bend-point is the value of :velocity in a pitch-bench event that is most common with normal emboucher.
-This is an observed value.
-"
-(def central-bend-point 78.0)
-"
-The distribution of values of :velocity is a rough bell curve around the central point with min values of 68
-and max values of 90. I want a bend of about a demi-tone in each direction. This computes to a -0.1 factor for each
-value below 78 and +0.1 for each value above.
-"
-(def bend-factor 0.1)
 
-(defn compute-note
-  [raw-note bend]
-  (+ raw-note (* bend-factor (- bend central-bend-point))))
-(def cc-breath-control 2)
 
 (defn- get-param [params param]
   (first (filter (fn [e] (= (:name e) param)) params)))
@@ -41,7 +17,7 @@ value below 78 and +0.1 for each value above.
    :type type})
 
 (defn get-midi-defs
-  "for each of the switchs get the control meta-data from the play-fn and compute the
+  "for each of the switches get the control meta-data from the play-fn and compute the
 offset, range, symbol and type to use when the event occurs "
   [play-fn switches]
   (apply merge
@@ -51,7 +27,7 @@ offset, range, symbol and type to use when the event occurs "
                {num (merge p (munge-param p type))})))))
 
 (defn fire-event [s val]
-  (e/event  [:wx7-event] {:type s :val val}))
+  (e/event  [:modo-midi-player-event] {:type s :val val}))
 
 (defn control-vals [p amp]
   (let [s (:symbol p)
@@ -73,23 +49,27 @@ offset, range, symbol and type to use when the event occurs "
     (fire-event s val)
     [s val]))
 
-(defn yamaha-wx7
-  ([play-fn] (yamaha-wx7  play-fn '{}))
-  ([play-fn midi-map] (yamaha-wx7  play-fn midi-map ::yamaha-wx7))
-  ([play-fn midi-map player-key] (yamaha-wx7 play-fn midi-map [:midi] player-key))
-  ([play-fn midi-map device-key player-key]
+(defn play
+  ([play-fn] (play  play-fn {:device-key [:midi] :player-key ::generic} {}))
+  ([play-fn profile] (play play-fn profile {}))
+  ([play-fn profile midi-map]
      (let [synth         (play-fn :note 48 :amp 0 :velocity 0)
            last-note*    (atom   {:note 48})
+           device-key    (:device-key profile)
+           player-key    (:player-key profile)
+           central-bend-point (:central-bend-point profile 0.0)
+           bend-factor        (:bend-factor profile 1.0)
            on-event-key  (concat device-key [:note-on])
            pb-event-key  (concat device-key [:pitch-bend])
            cc-event-key  (concat device-key [:control-change])
            pc-event-key  (concat device-key [:program-change])
-           on-key        (concat [::yamaha-wx7] on-event-key)
-           pb-key        (concat [::yamaha-wx7] pb-event-key)
-           cc-key        (concat [::yamaha-wx7] cc-event-key)
-           pc-key        (concat [::yamaha-wx7] pc-event-key)
+           on-key        (concat [player-key] on-event-key)
+           pb-key        (concat [player-key] pb-event-key)
+           cc-key        (concat [player-key] cc-event-key)
+           pc-key        (concat [player-key] pc-event-key)
            cc-events    (get-midi-defs play-fn (:control-change midi-map))
            pc-switches  (get-midi-defs play-fn (:program-change midi-map))]
+
 
        (e/on-event on-event-key (fn [{note :note velocity :velocity}]
                                   (let [amp (float (/ velocity 127))]
@@ -103,7 +83,7 @@ offset, range, symbol and type to use when the event occurs "
 
        (e/on-event pb-event-key (fn [{dummy :note bend :velocity}]
                                   (if-let [raw-note (:note* @last-note*)]
-                                    (let [note (compute-note raw-note bend)]
+                                    (let [note (+ raw-note (* bend-factor (- bend central-bend-point)))]
                                       (with-inactive-node-modification-error :silent
                                         (node-control synth [:note note])))))
                    pb-key)
@@ -134,5 +114,5 @@ offset, range, symbol and type to use when the event occurs "
                                 :device-key device-key
                                 :player-key player-key
                                 :playing? (atom true)}
-                      {:type ::yamaha-wx7})]
+                      {:type player-key})]
          (swap! poly-players* assoc player-key player)))))

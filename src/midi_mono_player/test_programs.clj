@@ -25,6 +25,20 @@
     :midi-map {:control-change [[2 "amp" :continuous]]}
     :profile :wx7
     }
+   3
+   {
+    :name "wx7tb303"
+    :inst wx7tb303
+    :midi-map wx7tb303-midi-map
+    :profile :wx7
+    }
+   4
+   {
+    :name "wx7saw-synth-6"
+    :inst wx7saw-synth-6
+    :midi-map wx7saw-synth-6-midi-map
+    :profile :wx7
+    }
    })
 
 (do-programs program-map 0 profile-map)

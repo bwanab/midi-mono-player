@@ -67,8 +67,8 @@
   (let [cc-events    (get-midi-defs play-fn (:control-change midi-map))]
     (-> (config! f
                  :title name
-                 :content (border-panel :center (make-main-panel cc-events))
-                 :sount (make-exit kill-fn))
+                 :content (border-panel :center (make-main-panel cc-events)
+                                        :south (make-exit kill-fn)))
         pack! show!)))
 
 (defn kill-monitor

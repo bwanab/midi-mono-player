@@ -3,6 +3,10 @@
         [overtone.core])
   (:require [overtone.libs.event :as e]))
 
+(defn kill-program
+  []
+  (e/event [:mono-midi-program-event] {:type :kill}))
+
 (defn do-programs
   [progs sel profiles]
   (let [p (get progs sel)
@@ -21,7 +25,3 @@
                   (kill (:synth @player*))
                   (kill-monitor mon))
                 [::program :mono-midi-program-event])))
-
-(defn kill-program
-  []
-  (e/event [:mono-midi-program-event] {:type :kill}))

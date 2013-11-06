@@ -36,11 +36,16 @@
     (grid-panel :rows 1 :columns (count items) :border "" :items items)))
 
 (defn make-main-panel
-  [discreet-cc-events pc-switches continuous-cc-events]
-  (border-panel :north (-> (grid-panel :rows 3 :columns 1)
-                           (add! (make-switches-panel discreet-cc-events))
-                           (add! (make-switches-panel pc-switches)))
-                :center (make-continuous-vals-panel continuous-cc-events)))
+  ([cc-events] (make-main-panel cc-events nil))
+  ([cc-events pc-switches]
+     (let [discreet-cc-events (filter #(= :discreet (:type (val %))) cc-events)
+           continuous-cc-events (filter #(not= :discreet (:type (val %))) cc-events)]
+       (border-panel :north (-> (grid-panel :rows 3 :columns 1)
+                                (add! (make-switches-panel discreet-cc-events))
+                                (add! (if pc-switches
+                                        (make-switches-panel pc-switches)
+                                        (label ""))))
+                     :center (make-continuous-vals-panel continuous-cc-events)))))
 
 (defn make-frame
   [cc-events pc-switches]
@@ -49,23 +54,27 @@
     :size  [600 :by 600]
     :on-close :exit
     :content (border-panel
-               :center (make-main-panel (filter #(= :discreet (:type (val %))) cc-events)
-                                        pc-switches
-                                        (filter #(not= :discreet (:type (val %))) cc-events)))))
+               :center (make-main-panel cc-events pc-switches))))
 
+(defn update
+  [f play-fn midi-map]
+  (let [cc-events    (get-midi-defs play-fn (:control-change midi-map))]
+    (config! f :content (border-panel :center (make-main-panel cc-events)))))
 
 (defn monitor
   [play-fn midi-map]
   (let [cc-events    (get-midi-defs play-fn (:control-change midi-map))
-        pc-switches  (get-midi-defs play-fn (:program-change midi-map))]
-    (invoke-later
-     (-> (make-frame cc-events pc-switches) pack! show!)))
-  (e/on-event [:modo-midi-player-event]
+        pc-switches  (get-midi-defs play-fn (:program-change midi-map))
+        f (make-frame cc-events pc-switches)  ]
+    (e/on-event [:modo-midi-player-event]
               (fn [val]
                 (when-let [e (get @mono-player-events (:type val))]
                   (case (:type e)
                     :continuous (config! (:widget e) :value  (* 100 (:val val)))
                     :discreet (text! (:widget e) (str (:val val))))))
-              (concat event-key [:modo-midi-player-event])))
+              (concat event-key [:modo-midi-player-event]))
+    (invoke-later
+     (-> f pack! show!))
+    f))
 
-;(monitor wx7mooger fcb-map)
+;(monitor wx7mooger wx7mooger-midi-map)

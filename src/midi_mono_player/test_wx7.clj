@@ -32,7 +32,9 @@
     (* amp filt 4)))
 
 (definst ding
-  [note 60 amp 0.3 gate 1]
+  [note {:default 60 :min 0 :max 127 :step 1}
+   amp  {:default 0.3 :min 0 :max 1.0 :step 0.01}
+   gate 1]
   (let [freq (midicps note)
         snd  (sin-osc freq)
         env  (env-gen (adsr 0.001 0.1 0.99 0.001) gate :action FREE)]
@@ -48,17 +50,18 @@
         env  (env-gen (adsr 0.001 0.1 0.99 0.001) gate :action FREE)]
     (* amp env snd)))
 
-(def fcb-map {:control-change [[2 "amp" :continuous]
+(def wx7mooger-midi-map {:control-change [[2 "amp" :continuous]
                                [7 "cutoff" :continuous]
                                [27 "width" :continuous]
-                               [51, "osc2-level" :discreet]]
-              :program-change [[0 "osc1"]
-                               [1 "osc2"]]})
+                               [51, "osc2-level" :discreet]
+                               [52, "osc1" :discreet]
+                               [53, "osc2" :discreet]]
+              :program-change []})
 
-;(def player (play wx7mooger (:wx7 profile-map) fcb-map))
+;(def player (play wx7mooger (:wx7 profile-map) wx7mooger-midi-map))
 
 (defn pctl [p c v]
-  (ctl (:synth (val (first p))) c v))
+  (ctl (:synth p) c v))
 
 "
 (on-event [:midi :program-change]

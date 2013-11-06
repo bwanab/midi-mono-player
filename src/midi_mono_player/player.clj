@@ -20,11 +20,12 @@
   "for each of the switches get the control meta-data from the play-fn and compute the
 offset, range, symbol and type to use when the event occurs "
   [play-fn switches]
-  (apply merge
-         (let [params (:params play-fn)]
-           (for [[num param type] switches]
-             (when-let [p (get-param params param)]
-               {num (merge p (munge-param p type))})))))
+  (if switches
+    (apply merge
+           (let [params (:params play-fn)]
+             (for [[num param type] switches]
+               (when-let [p (get-param params param)]
+                 {num (merge p (munge-param p type))}))))))
 
 (defn fire-event [s val]
   (e/event  [:modo-midi-player-event] {:type s :val val}))
@@ -115,4 +116,4 @@ offset, range, symbol and type to use when the event occurs "
                                 :player-key player-key
                                 :playing? (atom true)}
                       {:type player-key})]
-         (swap! poly-players* assoc player-key player)))))
+         player))))

@@ -1,5 +1,5 @@
 (ns midi-mono-player.monitor
-  (:use [seesaw core]
+  (:use [seesaw core style font]
         [midi-mono-player player test-wx7])
   (:require [overtone.libs.event :as e]))
 
@@ -7,7 +7,7 @@
 
 
 
-(def event-key [::midi-mono-player.player/modo-midi-player-event])
+(def event-key [::midi-mono-player.player/mono-midi-player-event])
 
 (def mono-player-events (atom {}))
 
@@ -15,7 +15,7 @@
   [events]
   (let [items (for [[n p] events]
                 (-> (grid-panel :rows 2 :columns 1)
-                    (add! (label (str n ": " (:name p))))
+                    (add! (label :text (str n ": " (:name p)) :class :event-title))
                     (add! (let [t (progress-bar :orientation :vertical
                                                 :min (* 100 (:min p))
                                                 :max (* 100 (:max p))
@@ -29,7 +29,7 @@
   [events]
   (let [items (for [[n p] events]
                 (-> (grid-panel  :rows 2 :columns 1)
-                    (add! (label (str n ": " (:name p))))
+                    (add! (label :text (str n ": " (:name p)) :class :event-title))
                     (add! (let [t (text (str (:default p)))]
                             (swap! mono-player-events assoc (:symbol p) {:type :discreet :widget t})
                             t))))]
@@ -47,34 +47,49 @@
                                         (label ""))))
                      :center (make-continuous-vals-panel continuous-cc-events)))))
 
+(defn make-exit
+  [kill-fn]
+  (-> (flow-panel)
+      (add! (button :text "Exit"
+                    :listen [:action (fn [e] (kill-fn))]))))
 (defn make-frame
-  [cc-events pc-switches]
+  [cc-events pc-switches name kill-fn]
   (frame
-    :title "Midi Monitor"
+    :title name
     :size  [600 :by 600]
     :on-close :exit
     :content (border-panel
-               :center (make-main-panel cc-events pc-switches))))
+              :center (make-main-panel cc-events pc-switches)
+              :south (make-exit kill-fn))))
 
-(defn update
-  [f play-fn midi-map]
+(defn update-monitor
+  [f play-fn midi-map name kill-fn]
   (let [cc-events    (get-midi-defs play-fn (:control-change midi-map))]
-    (config! f :content (border-panel :center (make-main-panel cc-events)))))
+    (-> (config! f
+                 :title name
+                 :content (border-panel :center (make-main-panel cc-events))
+                 :sount (make-exit kill-fn))
+        pack! show!)))
+
+(defn kill-monitor
+  [f]
+  (dispose! f))
 
 (defn monitor
-  [play-fn midi-map]
+  [play-fn midi-map name kill-fn]
   (let [cc-events    (get-midi-defs play-fn (:control-change midi-map))
         pc-switches  (get-midi-defs play-fn (:program-change midi-map))
-        f (make-frame cc-events pc-switches)  ]
-    (e/on-event [:modo-midi-player-event]
+        f (make-frame cc-events pc-switches name kill-fn)  ]
+    (e/on-event [:mono-midi-player-event]
               (fn [val]
                 (when-let [e (get @mono-player-events (:type val))]
                   (case (:type e)
                     :continuous (config! (:widget e) :value  (* 100 (:val val)))
                     :discreet (text! (:widget e) (str (:val val))))))
-              (concat event-key [:modo-midi-player-event]))
+              (concat event-key [:mono-midi-player-event]))
+    (apply-stylesheet f {[:.event-title] {:font (font :style :bold)}})
     (invoke-later
      (-> f pack! show!))
     f))
 
-;(monitor wx7mooger wx7mooger-midi-map)
+;(monitor wx7mooger wx7mooger-midi-map "wx7mooger")

@@ -43,7 +43,6 @@
 
 (defn make-discreet-event-widget
   [p f]
-  (println "format: " f)
   (match [(:min p) (:max p) (:step p)]
          [0 1 1] [:checkbox (checkbox :selected? (= (:default p) 1)) nil]
          :else (concat [:radio] (make-radio-event-widget p f))))
@@ -72,25 +71,35 @@
   (-> (flow-panel)
       (add! (button :text "Quit"
                     :listen [:action (fn [e] (kill-fn))]))))
+
+(defn make-content-panel
+  [cc-events pc-switches name kill-fn]
+  (border-panel
+              :north (label :text name :class :program-name :h-text-position :center)
+              :center (make-main-panel cc-events pc-switches)
+              :south (make-exit kill-fn)))
+
 (defn make-frame
   [cc-events pc-switches name kill-fn]
   (frame
     :title name
     :size  [600 :by 600]
     :on-close :exit
-    :content (border-panel
-              :center (make-main-panel cc-events pc-switches)
-              :south (make-exit kill-fn))))
+    :content (make-content-panel cc-events pc-switches name kill-fn)))
 
+(defn do-stylesheet
+  [f]
+  (apply-stylesheet f {[:.event-title] {:font (font :style :bold)}
+                       [:.program-name] {:font (font :style :bold :size 20)}}))
 
 (defn update-monitor
   [f play-fn midi-map name kill-fn]
   (let [cc-events    (get-midi-defs play-fn (:control-change midi-map))]
-    (-> (config! f
-                 :title name
-                 :content (border-panel :center (make-main-panel cc-events)
-                                        :south (make-exit kill-fn)))
-        pack! show!)))
+    (config! f
+             :title name
+             :content (make-content-panel cc-events nil name kill-fn))
+    (do-stylesheet f)
+    (-> f pack! show!)))
 
 (defn kill-monitor
   [f]
@@ -112,7 +121,7 @@
                                    t (text b)]
                                (config! b :selected? (= s t)))))))
               (concat event-key [:mono-midi-player-event]))
-    (apply-stylesheet f {[:.event-title] {:font (font :style :bold)}})
+    (do-stylesheet f)
     (invoke-later
      (-> f pack! show!))
     f))

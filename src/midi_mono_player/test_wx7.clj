@@ -104,7 +104,7 @@
   [note                {:default 48 :min 0 :max :127 :step 1}
    amp                 {:default 0.3 :min 0 :max 1 :step 0.01}
    lpf-lfo-freq        {:default 4.1  :min 0.0 :max 10.0  :step 0.01}
-   lpf-min-freq        {:default 400  :min 100 :max 9900  :step 100}
+   lpf-min-freq        {:default 400  :min 400 :max 9900  :step 400}
    lpf-max-freq        {:default 4000 :min 100 :max 10000 :step 100}
    lpf-res             {:default 0.1  :min 0.0 :max 1.0   :step 0.05}
    separation-delay-ms {:default 5.0  :min 0    :max 30.0  :step 0.1}

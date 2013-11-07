@@ -7,6 +7,9 @@
 (native!)
 
 
+(defn oom [x] (last (filter (fn [n] (< (Math/abs (- x (Math/pow 10 n))) x)) (range -5 1))))
+
+(defn get-format [x] (str "%." (Math/abs (oom x)) "f"))
 
 (def event-key [::midi-mono-player.player/mono-midi-player-event])
 
@@ -27,28 +30,32 @@
 
 
 (defn make-radio-event-widget
-  [p]
+  [p f]
   (let [group (button-group)
         info-label (label :text "" :border 10)
-        d (:default p)
+        form-d (format f (float (:default p)))
         panel (vertical-panel
-               :items (for [n (range (:min p) (+ (:max p) (:step p)) (:step p))]
-                        (radio :text (str n) :group group :selected? (= n d))))]
+               :items (let [r (range (:min p) (+ (:max p) (:step p)) (:step p))]
+                        (for [n r]
+                          (let [form-n (format f (float n))]
+                            (radio :text form-n :group group :selected? (= form-n form-d))))))]
     [panel group]))
 
 (defn make-discreet-event-widget
-  [p]
+  [p f]
+  (println "format: " f)
   (match [(:min p) (:max p) (:step p)]
          [0 1 1] [:checkbox (checkbox :selected? (= (:default p) 1)) nil]
-         :else (concat [:radio] (make-radio-event-widget p))))
+         :else (concat [:radio] (make-radio-event-widget p f))))
 
 (defn make-switches-panel
   [events]
   (let [items (for [[n p] events]
                 (border-panel
                  :north (label :text (str n ": " (:name p)) :class :event-title)
-                 :center (let [[typ t g] (make-discreet-event-widget p)]
-                           (swap! mono-player-events assoc (:symbol p) {:type typ :widget t :group g})
+                 :center (let [format (get-format (:step p))
+                               [typ t g] (make-discreet-event-widget p format)]
+                           (swap! mono-player-events assoc (:symbol p) {:type typ :widget t :group g :format format})
                            t)))]
     (grid-panel :rows 1 :columns (count items) :border "" :items items)))
 
@@ -63,7 +70,7 @@
 (defn make-exit
   [kill-fn]
   (-> (flow-panel)
-      (add! (button :text "Exit"
+      (add! (button :text "Quit"
                     :listen [:action (fn [e] (kill-fn))]))))
 (defn make-frame
   [cc-events pc-switches name kill-fn]
@@ -74,6 +81,7 @@
     :content (border-panel
               :center (make-main-panel cc-events pc-switches)
               :south (make-exit kill-fn))))
+
 
 (defn update-monitor
   [f play-fn midi-map name kill-fn]
@@ -100,9 +108,8 @@
                     :continuous (config! (:widget e) :value  (* 100 (:val val)))
                     :checkbox (config! (:widget e) :selected? (= val 1))
                     :radio (doseq [b (config (:group e) :buttons)]
-                             (let [s (str (:val val))
+                             (let [s (format (:format e) (float (:val val)))
                                    t (text b)]
-                               (println s " " t)
                                (config! b :selected? (= s t)))))))
               (concat event-key [:mono-midi-player-event]))
     (apply-stylesheet f {[:.event-title] {:font (font :style :bold)}})

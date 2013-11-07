@@ -133,4 +133,6 @@ change events that will trigger its instrument to be the current instrument.
 
 In performance, it's generally nice to have feedback on what you're playing. Namespace monitor in this
 project provides a simple GUI that shows the currently selected instrument as well as its parameters and
-their current setting.
+their current setting. Here's a screenshot:
+
+<img src="https://github.com/midi-mono-player/raw/master/doc/monitor.png" alt="monitor screenshot" />

@@ -33,6 +33,7 @@ Let's look at a sample instrument and its midi specification (this is a copy of 
 with the addition of a width parameter to control pulse width of the two ocillators when the pulse generator
 is selected:
 
+```clj
 (definst wx7mooger
   "Choose 0, 1, or 2 for saw, sin, or pulse"
   [note {:default 48 :min 0 :max 127 :step 1}
@@ -68,7 +69,7 @@ is selected:
                                [51, "osc2-level" :discreet]
                                [52, "osc1" :discreet]
                                [53, "osc2" :discreet]]})
-
+```
 It's worth noting that my FCB-1010 has two foot pedals that generate control-change events 7 and 27
 with values from 0 to 127. The wx7mooger-midi-map defines these two pedals to control cutoff and width
 respectively. The player automatically computes the min/max values for those parameters as defined
@@ -84,6 +85,7 @@ Any number of instruments can be defined like this.
 A program is a definition of a set of instruments and their midi mappings. An example is given in the
 namespace test-programs. Let's look at it here:
 
+```clj
 (def program-map
   {
    0
@@ -123,6 +125,7 @@ namespace test-programs. Let's look at it here:
     :profile :wx7
     }
    })
+```
 
 This program map defines 5 different instruments along with a midi-map and a profile for each. For the
 foo and ding instruments, the midi-maps are defined in-line. The keys to the map are the midi program

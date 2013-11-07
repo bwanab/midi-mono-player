@@ -134,11 +134,3 @@ change events that will trigger its instrument to be the current instrument.
 In performance, it's generally nice to have feedback on what you're playing. Namespace monitor in this
 project provides a simple GUI that shows the currently selected instrument as well as its parameters and
 their current setting.
-
-
-
-## License
-
-Copyright © 2013 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.

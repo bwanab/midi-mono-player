@@ -17,6 +17,7 @@ It allows for
 
 
 It uses standard Overtone insts with the caveats that
+
 1. The inputs must have metadata defined.
 2. The gate parameter for envelope should be 1.
 3. "note" and "amp" parameters should be given.

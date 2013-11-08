@@ -24,6 +24,36 @@ It uses standard Overtone insts with the caveats that
 
 ## Usage
 
+### Quick start
+
+* create new project
+
+```sh
+lein new myproject
+cd myproject
+```
+
+* edit project.clj and add to dependencies:
+
+```clj
+[midi-mono-player "0.1.0-SNAPSHOT"]
+```
+
+* create a file that has defines instruments and programs (see below for examples)
+
+```sh
+lein repl
+```
+
+```clj
+(use 'myproject.yourtestfiles)
+(use 'midi-mono-player.program)
+
+(do-programs your-program-map <the key to one of your instruments> your-profile-map)
+```
+
+### Details
+
 Input device specific values are stored in profiles.clj. Currently, this file has only
 device specific values for the Yamaha WX7.
 

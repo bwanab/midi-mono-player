@@ -1,4 +1,4 @@
-(defproject midi-mono-player "0.1.0"
+(defproject midi-mono-player "0.1.0-SNAPSHOT"
   :description "a mono midi player that responds to control-change events, program change and pitch-bend"
   :url "http://example.com/FIXME"
   :license {:name  "The MIT License (MIT)"

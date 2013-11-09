@@ -22,7 +22,7 @@
    {
     :name "ding"
     :inst ding
-    :midi-map {:control-change [[2 "amp" :continuous]]}
+    :midi-map ding-midi-map
     :profile :wx7
     }
    3
@@ -39,6 +39,15 @@
     :midi-map wx7saw-synth-6-midi-map
     :profile :wx7
     }
+   5
+   {
+    :name "wx7additive"
+    :inst wx7additive
+    :midi-map wx7additive-midi-map
+    :profile :wx7
+    }
    })
 
-(do-programs program-map 0 profile-map)
+(kill-program)
+(Thread/sleep 2000)
+(do-programs program-map 4 profile-map)

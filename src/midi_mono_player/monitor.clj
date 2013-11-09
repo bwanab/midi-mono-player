@@ -18,21 +18,20 @@
 (defn make-continuous-vals-panel
   [events]
   (let [items (for [[n p] events]
-                (-> (grid-panel :rows 2 :columns 1)
-                    (add! (label :text (str n ": " (:name p)) :class :event-title))
-                    (add! (let [t (progress-bar :orientation :vertical
-                                                :min (* 100 (:min p))
-                                                :max (* 100 (:max p))
-                                                :value (* 100 (:default p)))]
-                            (swap! mono-player-events assoc (:symbol p) {:type :continuous :widget t})
-                            t))))]
-    (grid-panel :rows 1 :columns (count items) :border "" :items items)))
+                (border-panel :hgap 10
+                 :north (label :h-text-position :center :text (str n ": " (:name p)) :class :event-title)
+                 :center (let [t (progress-bar :orientation :vertical
+                                      :min (* 100 (:min p))
+                                      :max (* 100 (:max p))
+                                      :value (* 100 (:default p)))]
+                           (swap! mono-player-events assoc (:symbol p) {:type :continuous :widget t})
+                           t)))]
+    (grid-panel :hgap 10 :rows 1 :columns (count items) :items items)))
 
 
 (defn make-radio-event-widget
   [p f]
   (let [group (button-group)
-        info-label (label :text "" :border 10)
         form-d (format f (float (:default p)))
         panel (vertical-panel
                :items (let [r (range (:min p) (+ (:max p) (:step p)) (:step p))]
@@ -50,19 +49,19 @@
 (defn make-switches-panel
   [events]
   (let [items (for [[n p] events]
-                (border-panel
-                 :north (label :text (str n ": " (:name p)) :class :event-title)
+                (border-panel :hgap 10
+                 :north (label :h-text-position :center :text (str n ": " (:name p)) :class :event-title)
                  :center (let [format (get-format (:step p))
                                [typ t g] (make-discreet-event-widget p format)]
                            (swap! mono-player-events assoc (:symbol p) {:type typ :widget t :group g :format format})
                            t)))]
-    (grid-panel :rows 1 :columns (count items) :border "" :items items)))
+    (grid-panel :hgap 10 :rows 1 :columns (count items) :border "" :items items)))
 
 (defn make-main-panel
   ([cc-events] (make-main-panel cc-events nil))
   ([cc-events pc-switches]
-     (let [discreet-cc-events (filter #(= :discreet (:type (val %))) cc-events)
-           continuous-cc-events (filter #(not= :discreet (:type (val %))) cc-events)]
+     (let [discreet-cc-events (reverse (filter #(= :discreet (:type (val %))) cc-events))
+           continuous-cc-events (reverse (filter #(= :continuous (:type (val %))) cc-events))]
        (border-panel :north (make-switches-panel discreet-cc-events)
                      :center (make-continuous-vals-panel continuous-cc-events)))))
 

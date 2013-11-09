@@ -22,16 +22,11 @@ It uses standard Overtone insts with the caveats that
 2. The gate parameter for envelope should be 1.
 3. "note" and "amp" parameters should be given.
 
-Other things that make sense, if using the inst with a wind controller that generates breath-control events are:
-
-1. volume attack should be very low
-2. volume decay should be low
-3. volume sustain should be higher
-4. volume release should be very low
-
-These are all sensible since one is using breath control to adjust these parameters on the fly. Note that
-this doesn't imply anything about adsr on effects even though one might consider controlling them with breath
-also.
+Other things that make sense if using the inst with a wind controller that
+generates breath-control events are that the volume envelope really makes no
+ difference with this player, since the amplitude is always going to be set by
+ breath pressure. Note that this doesn't imply anything about adsr on effects
+ even though one might consider controlling them with breath also.
 
 ## Usage
 

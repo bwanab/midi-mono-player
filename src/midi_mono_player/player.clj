@@ -72,6 +72,7 @@ offset, range, symbol and type to use when the event occurs "
            pc-switches  (get-midi-defs play-fn (:program-change midi-map))]
 
 
+       "note-on events send the new note to the synth and save that as the last-note played"
        (e/on-event on-event-key (fn [{note :note velocity :velocity}]
                                   (let [amp (float (/ velocity 127))]
                                     (with-inactive-node-modification-error :silent
@@ -82,6 +83,16 @@ offset, range, symbol and type to use when the event occurs "
 
        "off event isn't needed since the wx7 is at rest unless I'm blowing."
 
+       "pitch-bend events mutate the the note that the synth is playing. bend-factor
+and central-bend-point are specified in a separate profile for the specific device.
+
+For example, given a last note played of middle c note is 48. This number is modified by pitch
+bend to produce the resultant note where,
+
+new-note = last-note + bend-factor * (bend - central-bend-point)
+
+last-note is note affected until a new note-on event occurs.
+"
        (e/on-event pb-event-key (fn [{dummy :note bend :velocity}]
                                   (if-let [raw-note (:note* @last-note*)]
                                     (let [note (+ raw-note (* bend-factor (- bend central-bend-point)))]
@@ -89,6 +100,9 @@ offset, range, symbol and type to use when the event occurs "
                                         (node-control synth [:note note])))))
                    pb-key)
 
+       "control change events are interpreted based on the midi-map (see test-wx7 for examples).
+All assigned control change events fire events of their own that are used by monitor to
+display the current state"
        (e/on-event cc-event-key (fn [{cc :note velocity :velocity}]
                                   (when-let [p (get cc-events cc)]
                                     (try
@@ -101,6 +115,9 @@ offset, range, symbol and type to use when the event occurs "
                                   )
                    cc-key)
 
+       "program change events can be used if necessary, but it would be best not to use them to control
+the player. They should be reserved for specifying what synth is currently running at a higher level (see
+program.clj)"
        (e/on-event pc-event-key (fn [{program :note dummy :velocity}]
                                   (when-let [p (get pc-switches program)]
                                     (with-inactive-node-modification-error :silent

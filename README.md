@@ -1,7 +1,7 @@
 # midi-mono-player
 
 An overtone library to support playing of instruments with monophonic input devices such as
-wind controllers. Honestly, it is Specifically to support my Yamaha WX7 and my Behringer FCB-1010
+wind controllers. Honestly, it is specifically to support my Yamaha WX7 and my Behringer FCB-1010
 foot pedal, but it should be generic enough to work with other controllers. The player handles
 pitch-bend and breath-control midi events and allows for control of others.
 
@@ -21,6 +21,17 @@ It uses standard Overtone insts with the caveats that
 1. The inputs must have metadata defined.
 2. The gate parameter for envelope should be 1.
 3. "note" and "amp" parameters should be given.
+
+Other things that make sense, if using the inst with a wind controller that generates breath-control events are:
+
+1. volume attack should be very low
+2. volume decay should be low
+3. volume sustain should be higher
+4. volume release should be very low
+
+These are all sensible since one is using breath control to adjust these parameters on the fly. Note that
+this doesn't imply anything about adsr on effects even though one might consider controlling them with breath
+also.
 
 ## Usage
 
@@ -167,3 +178,12 @@ project provides a simple GUI that shows the currently selected instrument as we
 their current setting. Here's a screenshot:
 
 <img src="https://github.com/bwanab/midi-mono-player/raw/master/doc/monitor.png" alt="monitor screenshot" />
+
+### A note on note-off events.
+
+If you examine the source, you'll see that the player itself doesn't respond to midi note-off events. This makes
+sense for a wind controller. Consider the order of events. First a note-on event will fire, then an endless
+succession of breath-control events will fire as long as one is blowing. These breath-control events determine
+the amplitude. When a new key is pushed, whether one is blowing or not, the wind controller will generate
+note-off and note on events. There is no useful response to the note-off since the note-on will tell the player
+to change the note and breath-control will determine the amplitude.

@@ -63,8 +63,8 @@
     (* amp filt 4)))
 
 (def wx7mooger-midi-map {:control-change [[2 "amp" :continuous]
-                               [7 "cutoff" :continuous]
                                [27 "width" :continuous]
+                               [7 "cutoff" :continuous]
                                [51, "osc2-level" :discreet]
                                [52, "osc1" :discreet]
                                [53, "osc2" :discreet]]
@@ -80,13 +80,14 @@
   (let [freq (midicps note)
         snd  (sin-osc freq)
         ;;dist (distort (* boost (clip2 snd level)))
-        env  (env-gen (adsr 0.001 0.1 0.99 0.001) gate :action FREE)]
+        env  (env-gen (adsr 0.5 0.1 0.99 0.001) gate :action FREE)]
     (* amp env snd)))
 
 (def ding-midi-map {:control-change
                     [[2 "amp" :continuous]
-                     [7 "boost" :continuous]
-                     [27 "level" :continuous]]})
+                     [27 "level" :continuous]
+                     [7 "boost" :continuous]]})
+
 
 (definst foo
   [note {:default 48 :min 0 :max :127 :step 1}
@@ -105,74 +106,44 @@
    low-pass-filter LFO."
   [note                {:default 48 :min 0 :max :127 :step 1}
    amp                 {:default 0.3 :min 0 :max 1 :step 0.01}
-   lpf-lfo-freq        {:default 4.1  :min 0.0 :max 10.0  :step 0.01}
-   lpf-min-freq        {:default 400  :min 400 :max 9900  :step 400}
-   lpf-max-freq        {:default 4000 :min 100 :max 10000 :step 100}
    lpf-res             {:default 0.1  :min 0.0 :max 1.0   :step 0.05}
-   separation-delay-ms {:default 5.0  :min 0    :max 30.0  :step 5.0}
-   lfo-level           {:default 1.4  :min 0.0 :max 5.0   :step 0.05}
-   lfo-freq            {:default 1.8  :min 0.0 :max 10.0  :step 0.1}
-   pitch-index         {:default 0    :min 0   :max 15    :step 1}
-   adsr-attack-time    {:default 0.001 :min 0.0  :max 1.0   :step 0.01}
-   adsr-decay-time     {:default 0.3 :min 0.0  :max 1.0   :step 0.01}
-   adsr-sustain-level  {:default 0.99 :min 0.0  :max 1.0   :step 0.01}
-   adsr-release-time   {:default 0.001 :min 0.0  :max 1.0   :step 0.01}
-   adsr-peak-level     {:default 0.9 :min 0.0  :max 1.0   :step 0.01}
-   adsr-curve          {:default -4  :min -5   :max 5     :step 1}
-   gate                {:default 1.0 :min 0.0  :max 1.0   :step 1}]
+   separation-delay-ms {:default 15.0  :min 0    :max 30.0  :step 5.0}
+   cutoff              {:default 3000 :min 1000 :max 4000 :step 1000}
+   gate                1]
   (let [pitch-freq (midicps note)
-        lfo-out (* lfo-level (sin-osc lfo-freq))
-        saws-out (mix (saw [pitch-freq (+ pitch-freq lfo-out)]))
+        saws-out (mix (saw [pitch-freq (+ pitch-freq (/ pitch-freq 440))]))
         separation-delay (/ separation-delay-ms 1000.0)
         saws-out-2ch [saws-out (delay-c saws-out 1.0 separation-delay)]
-        lpf-freq (lin-lin (sin-osc lpf-lfo-freq) -1 1 lpf-min-freq lpf-max-freq)
-        lpf-out-2ch (moog-ff saws-out-2ch lpf-freq lpf-res)
-        env-out (env-gen (adsr adsr-attack-time   adsr-decay-time
-                               adsr-sustain-level adsr-release-time
-                               adsr-peak-level    adsr-curve)
-                         :gate gate
-                         :action FREE)
+        lpf-out-2ch (moog-ff saws-out-2ch cutoff lpf-res)
+        verbed (free-verb lpf-out-2ch 0.5 0.5 0.5)
         ]
-    (* amp env-out lpf-out-2ch)))
+    (* amp verbed)))
 
 (def wx7saw-synth-6-midi-map {:control-change [[2 "amp" :continuous]
                                                [51 "separation-delay-ms" :discreet]
-                                               [27 "lfo-freq" :continuous]
-                                               [7 "lfo-level" :continuous]]})
+                                               [52 "cutoff" :discreet]
+                                               [27 "lpf-res" :continuous]
+                                               [7 "detune-level" :continuous]]})
 
 (definst wx7additive
   "additive synth"
   [note {:default 48 :min 0 :max 127 :step 1}
    amp  {:default 0.3 :min 0 :max 1 :step 0.01}
-   osc1-level {:default 0.4 :min 0 :max 1 :step 0.2}
-   osc2-level {:default 0.4 :min 0 :max 1 :step 0.2}
+   osc1-level {:default 1 :min 0 :max 1 :step 0.2}
+   osc2-level {:default 0.6 :min 0 :max 1 :step 0.2}
    osc3-level {:default 0.4 :min 0 :max 1 :step 0.2}
-   osc4-level {:default 0.4 :min 0 :max 1 :step 0.2}
-   osc5-level {:default 0.4 :min 0 :max 1 :step 0.2}
-   cutoff {:default 500 :min 500 :max 4000 :step 1}
-   attack {:default 0.0001 :min 0.0001 :max 5 :step 0.001}
-   decay {:default 0.3 :min 0.0001 :max 5 :step 0.001}
-   sustain {:default 0.99 :min 0.0001 :max 1 :step 0.001}
-   release {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
-   fattack {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
-   fdecay {:default 0.3 :min 0.0001 :max 6 :step 0.001}
-   fsustain {:default 0.999 :min 0.0001 :max 1 :step 0.001}
-   frelease {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
+   osc4-level {:default 0.2 :min 0 :max 1 :step 0.2}
+   osc5-level {:default 0.2 :min 0 :max 1 :step 0.2}
+   osc6-level {:default 0.2 :min 0 :max 1 :step 0.2}
    gate 1]
   (let [freq       (midicps note)
-        amp-env    (env-gen (adsr attack decay sustain release) gate :action FREE)
-        f-env      (env-gen (adsr fattack fdecay fsustain frelease) gate)
-        p8         (* 2.0 freq)
-        p82        (* 2.0 p8)
-        s1         (* osc1-level (sin-osc freq))
-        s2         (* osc2-level (sin-osc p8))
-        s3         (* osc3-level (sin-osc (* 1.5 p8)))
-        s4         (* osc4-level (sin-osc p82))
-        s5         (* osc5-level (sin-osc (* 1.25 p82)))
-        sig        (+ s1 s2 s3 s4 s5)
-        ;; filt       (moog-ff sig (* cutoff f-env) 3)
+        levels     [osc1-level osc2-level osc3-level osc4-level osc5-level osc6-level]
+        harmonics  (range 1 6)
+        comp       (fn [harmonic level]
+                     (* 1/2 amp level (sin-osc (* harmonic freq))))
+        sig        (mix (map comp harmonics levels))
         ]
-    (* amp sig 2)))
+    sig))
 
 (def wx7additive-midi-map {:control-change [[2 "amp" :continuous]
                                             [51 "osc1-level" :discreet]
@@ -180,7 +151,8 @@
                                             [53 "osc3-level" :discreet]
                                             [54 "osc4-level" :discreet]
                                             [55 "osc5-level" :discreet]
-                                            [27 "cutoff" :continuous]]})
+                                            [56 "osc6-level" :discreet]
+                                            ]})
 
 
 ;(def player (play wx7mooger (:wx7 profile-map) wx7mooger-midi-map))

@@ -1,6 +1,19 @@
 (ns midi-mono-player.test-wx7
   (:use [overtone.live]
+        [overtone.examples.compositions.bells]
         [midi-mono-player player profiles]))
+
+(definst bell
+  [note       {:default 60 :min 0 :max 120 :step 1}
+   amp        {:default 0.5 :min 0 :max 1 :step 0.01}
+   dur        {:default 1.0 :min 1 :max 7.0 :step 1}]
+  (let [freq (midicps note)
+        snd (* amp (bell-partials freq dur partials))]
+    snd))
+
+(def bell-midi-map {:control-change
+                    [[2 "amp" :continuous]
+                     [27 "dur" :continuous]]})
 
 (definst wx7tb303
   [note       {:default 60 :min 0 :max 120 :step 1}
@@ -41,47 +54,85 @@
    osc2 {:default 1 :min 0 :max 2 :step 1}
    osc1-level {:default 0.5 :min 0 :max 1 :step 0.01}
    osc2-level {:default 0.0 :min 0 :max 1 :step 0.1}
-   width {:default 0.5 :min 0.1 :max 0.5 :step 0.05}
+   pwidth1 {:default 0.5 :min 0.1 :max 0.5 :step 0.1}
+   pwidth2 {:default 0.5 :min 0.1 :max 0.5 :step 0.1}
    cutoff {:default 500 :min 500 :max 4000 :step 1}
-   attack {:default 0.0001 :min 0.0001 :max 5 :step 0.001}
-   decay {:default 0.3 :min 0.0001 :max 5 :step 0.001}
-   sustain {:default 0.99 :min 0.0001 :max 1 :step 0.001}
-   release {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
    fattack {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
    fdecay {:default 0.3 :min 0.0001 :max 6 :step 0.001}
    fsustain {:default 0.999 :min 0.0001 :max 1 :step 0.001}
    frelease {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
    gate 1]
   (let [freq       (midicps note)
-        osc-bank-1 [(saw freq) (sin-osc freq) (pulse freq width) ]
-        osc-bank-2 [(saw freq) (sin-osc freq) (pulse freq width) ]
-        amp-env    (env-gen (adsr attack decay sustain release) gate :action FREE)
+        osc-bank-1 [(saw freq) (sin-osc freq) (pulse freq pwidth1) ]
+        osc-bank-2 [(saw freq) (sin-osc freq) (pulse freq pwidth2) ]
         f-env      (env-gen (adsr fattack fdecay fsustain frelease) gate)
         s1         (* osc1-level (select osc1 osc-bank-1))
         s2         (* osc2-level (select osc2 osc-bank-2))
-        filt       (moog-ff (+ s1 s2) (* cutoff f-env) 3)]
-    (* amp filt 4)))
+        filt       (moog-ff [s1 s2] (* cutoff f-env) 3)]
+    (* amp filt)))
 
 (def wx7mooger-midi-map {:control-change [[2 "amp" :continuous]
-                               [27 "width" :continuous]
                                [7 "cutoff" :continuous]
                                [51, "osc2-level" :discreet]
                                [52, "osc1" :discreet]
-                               [53, "osc2" :discreet]]
+                               [53, "osc2" :discreet]
+                               [54 "pwidth1" :discreet]
+                               [55 "pwidth2" :discreet]
+                               ]
+                         :program-change []})
+
+(definst wx7nolpf
+  "Choose 0, 1, or 2 for saw, sin, or pulse"
+  [note {:default 48 :min 0 :max 127 :step 1}
+   amp  {:default 0.3 :min 0 :max 1 :step 0.01}
+   osc1 {:default 2 :min 0 :max 2 :step 1}
+   osc2 {:default 1 :min 0 :max 2 :step 1}
+   osc1-level {:default 0.5 :min 0 :max 1 :step 0.01}
+   osc2-level {:default 0.5 :min 0 :max 1 :step 0.1}
+   osc2-harmonic {:default 2 :min 1 :max 8 :step 1}
+   pwidth1 {:default 0.5 :min 0.1 :max 0.5 :step 0.1}
+   pwidth2 {:default 0.5 :min 0.1 :max 0.5 :step 0.1}
+   bpf-freq {:default 100 :min 100 :max 4000 :step 1}
+   bpf-q   {:default 1 :min 1 :max 4 :step 1}
+   fattack {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
+   fdecay {:default 0.3 :min 0.0001 :max 6 :step 0.001}
+   fsustain {:default 0.999 :min 0.0001 :max 1 :step 0.001}
+   frelease {:default 0.0001 :min 0.0001 :max 6 :step 0.001}
+   gate 1]
+  (let [freq       (midicps note)
+        freq2      (/ freq 2)
+        osc-bank-1 [(saw freq) (sin-osc freq) (pulse freq pwidth1) ]
+        osc-bank-2 [(saw freq2) (sin-osc freq2) (pulse freq2 pwidth2) ]
+        f-env      (env-gen (adsr fattack fdecay fsustain frelease) gate)
+        s1         (* osc1-level (select osc1 osc-bank-1))
+        s2         (* osc2-level (select osc2 osc-bank-2))
+        filt       (bpf (+ s1 s2) bpf-freq bpf-q)
+        ]
+    (* amp filt)))
+
+(def wx7nolpf-midi-map {:control-change [[2 "amp" :continuous]
+                               [7 "bpf-freq" :continuous]
+                               [51, "osc2-level" :discreet]
+                               [52, "osc1" :discreet]
+                               [53, "osc2" :discreet]
+                               [54 "pwidth1" :discreet]
+                               [55 "pwidth2" :discreet]
+                               [56 "bpf-q" :discreet]
+                               ]
                          :program-change []})
 
 
 (definst ding
   [note {:default 60 :min 0 :max 127 :step 1}
    amp  {:default 0.3 :min 0 :max 1.0 :step 0.01}
-   boost {:default 2 :min 1 :max 20 :step 1}
-   level {:default 0.05 :min 0.05 :max 0.5 :step 0.05}
+   boost {:default 4 :min 1 :max 20 :step 1}
+   level {:default 0.01 :min 0.01 :max 0.5 :step 0.05}
    gate 1]
   (let [freq (midicps note)
         snd  (sin-osc freq)
-        ;;dist (distort (* boost (clip2 snd level)))
-        env  (env-gen (adsr 0.5 0.1 0.99 0.001) gate :action FREE)]
-    (* amp env snd)))
+        dist (distort (* boost (clip2 snd level)))
+        ]
+    (* amp dist)))
 
 (def ding-midi-map {:control-change
                     [[2 "amp" :continuous]
@@ -101,27 +152,35 @@
     (* amp env snd)))
 
 
-(definst wx7saw-synth-6
-  "a detuned and stereo-separated saw synth with a low-pass-filter and
-   low-pass-filter LFO."
+(definst wx7saw-synth
+  "a detuned and stereo-separated saw synth with a moog-filter.
+   The detune is based on a percentage of the frequency hard-coded
+   to 1/440 which is observed to sound good across the frequency range."
   [note                {:default 48 :min 0 :max :127 :step 1}
    amp                 {:default 0.3 :min 0 :max 1 :step 0.01}
    lpf-res             {:default 0.1  :min 0.0 :max 1.0   :step 0.05}
    separation-delay-ms {:default 15.0  :min 0    :max 30.0  :step 5.0}
    cutoff              {:default 3000 :min 1000 :max 4000 :step 1000}
+   reverb-wet-dry      {:default 0.4 :min 0 :max 1.0 :step 0.2}
+   reverb-room-size    {:default 0.4 :min 0 :max 1.0 :step 0.2}
+   reverb-dampening    {:default 0.4 :min 0 :max 1.0 :step 0.2}
    gate                1]
   (let [pitch-freq (midicps note)
-        saws-out (mix (saw [pitch-freq (+ pitch-freq (/ pitch-freq 440))]))
+        pitch-freq2 (/ pitch-freq 2)
+        saws-out (mix (saw [pitch-freq (+ pitch-freq2 (/ pitch-freq2 440))]))
         separation-delay (/ separation-delay-ms 1000.0)
         saws-out-2ch [saws-out (delay-c saws-out 1.0 separation-delay)]
         lpf-out-2ch (moog-ff saws-out-2ch cutoff lpf-res)
-        verbed (free-verb lpf-out-2ch 0.5 0.5 0.5)
+        verbed (free-verb lpf-out-2ch reverb-wet-dry reverb-room-size reverb-dampening)
         ]
     (* amp verbed)))
 
-(def wx7saw-synth-6-midi-map {:control-change [[2 "amp" :continuous]
+(def wx7saw-synth-midi-map {:control-change [[2 "amp" :continuous]
                                                [51 "separation-delay-ms" :discreet]
                                                [52 "cutoff" :discreet]
+                                               [53 "reverb-wet-dry" :discreet]
+                                               [54 "reverb-room-size" :discreet]
+                                               [55 "reverb-dampening" :discreet]
                                                [27 "lpf-res" :continuous]
                                                [7 "detune-level" :continuous]]})
 

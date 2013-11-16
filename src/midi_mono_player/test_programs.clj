@@ -34,9 +34,9 @@
     }
    4
    {
-    :name "wx7saw-synth-6"
-    :inst wx7saw-synth-6
-    :midi-map wx7saw-synth-6-midi-map
+    :name "wx7saw-synth"
+    :inst wx7saw-synth
+    :midi-map wx7saw-synth-midi-map
     :profile :wx7
     }
    5
@@ -44,6 +44,13 @@
     :name "wx7additive"
     :inst wx7additive
     :midi-map wx7additive-midi-map
+    :profile :wx7
+    }
+   6
+   {
+    :name "wx7nolpf"
+    :inst wx7nolpf
+    :midi-map wx7nolpf-midi-map
     :profile :wx7
     }
    })

@@ -20,7 +20,7 @@ It uses standard Overtone insts with the caveats that
 
 1. The inputs must have metadata defined.
 2. The gate parameter for envelope should be 1.
-3. "note" and "amp" parameters should be given.
+3. "note" and "amp" parameters should be given and amp should be assigned to change-control event 2.
 
 Other things that make sense if using the inst with a wind controller that
 generates breath-control events are that the volume envelope really makes no

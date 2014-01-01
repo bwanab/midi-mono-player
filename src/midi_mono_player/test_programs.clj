@@ -53,6 +53,20 @@
     :midi-map wx7nolpf-midi-map
     :profile :wx7
     }
+   7
+   {
+    :name "ding-s"
+    :inst ding-s
+    :midi-map ding-s-midi-map
+    :profile :wx7
+    }
+   8
+   {
+    :name "violin"
+    :inst violin
+    :midi-map violin-midi-map
+    :profile :wx7
+    }
    })
 
 (kill-program)

@@ -4,7 +4,8 @@
   :license {:name  "The MIT License (MIT)"
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [overtone "0.9.0-SNAPSHOT"]
+                 [org.clojure/core.match "0.2.0"]
+                 [overtone "0.9.1"]
                  [seesaw "1.4.4"]]
   ;:main midi-mono-player.core
   )

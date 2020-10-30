@@ -11,7 +11,7 @@
 
 (defn get-format [x] (str "%." (Math/abs (oom x)) "f"))
 
-(def event-key [::midi-mono-player.player/mono-midi-player-event])
+(def event-key [:player/mono-midi-player-event])
 
 (def mono-player-events (atom {}))
 

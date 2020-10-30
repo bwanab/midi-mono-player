@@ -28,7 +28,7 @@ offset, range, symbol and type to use when the event occurs "
                  {num (merge p (munge-param p type))}))))))
 
 (defn fire-event [s val]
-  (e/event  [:mono-midi-player-event] {:type s :val val}))
+  (e/event  [::mono-midi-player-event] {:type s :val val}))
 
 (defn control-vals [p amp]
   (let [s (:symbol p)
@@ -47,6 +47,7 @@ offset, range, symbol and type to use when the event occurs "
 (defn discreet-change [p]
   (let [s (keyword (:name p))
         val (inc-switch p)]
+    ;;(println "discreet-change " p)
     (fire-event s val)
     [s val]))
 
@@ -71,11 +72,13 @@ offset, range, symbol and type to use when the event occurs "
            cc-events    (get-midi-defs play-fn (:control-change midi-map))
            pc-switches  (get-midi-defs play-fn (:program-change midi-map))]
 
+       ;;(println "device-key: " device-key " cc-event-key: " cc-event-key)
 
        "note-on events send the new note to the synth and save that as the last-note played"
        (e/on-event on-event-key (fn [{note :note velocity :velocity}]
                                   (let [amp (float (/ velocity 127))]
                                     (with-inactive-node-modification-error :silent
+                                      ;;(println "note = " note " amp = "amp " velocity = " velocity)
                                       (node-control synth [:note note :amp amp :velocity velocity]))
                                     (swap! last-note* assoc
                                            :note* note)))
@@ -97,6 +100,7 @@ last-note is note affected until a new note-on event occurs.
                                   (if-let [raw-note (:note* @last-note*)]
                                     (let [note (+ raw-note (* bend-factor (- bend central-bend-point)))]
                                       (with-inactive-node-modification-error :silent
+                                        ;;(println "bend: " bend " new note: " note)
                                         (node-control synth [:note note])))))
                    pb-key)
 
@@ -104,6 +108,7 @@ last-note is note affected until a new note-on event occurs.
 All assigned control change events fire events of their own that are used by monitor to
 display the current state"
        (e/on-event cc-event-key (fn [{cc :note velocity :velocity}]
+                                  ;;(println "on-event: " cc velocity)
                                   (when-let [p (get cc-events cc)]
                                     (try
                                       (let [amp (float (/ velocity 127))]
@@ -134,3 +139,6 @@ program.clj)"
                                 :playing? (atom true)}
                       {:type player-key})]
          player))))
+
+
+;;(play wx7mooger (get profile-map :wx7) wx7mooger-midi-map)

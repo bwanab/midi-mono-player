@@ -71,4 +71,4 @@
 
 (kill-program)
 (Thread/sleep 2000)
-(do-programs program-map 4 profile-map)
+(do-programs program-map 3 profile-map)

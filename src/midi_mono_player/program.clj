@@ -28,7 +28,7 @@ for examples).
                    [::midi-mono-player :midi :program-change])
        (e/on-event [:mono-midi-program-event]
                    (fn [val]
-                     (println ":mono-midi-program-event")
+                     ;;(println ":mono-midi-program-event")
                      (kill (:synth @player*))
                      (kill-monitor mon))
                    [::program :mono-midi-program-event]))))

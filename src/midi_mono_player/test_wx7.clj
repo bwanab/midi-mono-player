@@ -272,6 +272,7 @@
                                        ]})
 
 
+(def dummy-midi-map {:control-change [[2 "amp" :continuous]]})
 ;(def player (play wx7mooger (:wx7 profile-map) wx7mooger-midi-map))
 
 (defn pctl [p c v]

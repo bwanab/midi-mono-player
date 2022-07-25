@@ -14,11 +14,12 @@ the selected instrument with the parameters given by the program map and
 the profile specified in the program map (see test-programs, test-wx7 and profiles
 for examples).
 "
-  ([progs sel profiles] (do-programs progs sel profiles true))
+  ([progs sel profiles] (do-programs progs sel profiles false))
   ([progs sel profiles monitor?]
-     (let [p (get progs sel)
-           player*   (atom (play (:inst p) (get profiles (:profile p)) (:midi-map p)))
-           mon (if monitor? (monitor (:inst p) (:midi-map p) (:name p) kill-program))]
+   (let [p (get progs sel)
+         instr (:inst p)
+         player*   (atom (play instr (get profiles (:profile p)) (:midi-map p)))
+         mon (if monitor? (monitor (:inst p) (:midi-map p) (:name p) kill-program))]
        (e/on-event [:midi :program-change]
                    (fn [{program :note dummy :velocity}]
                      (when-let [pp (get progs program)]
@@ -31,4 +32,5 @@ for examples).
                      ;;(println ":mono-midi-program-event")
                      (kill (:synth @player*))
                      (kill-monitor mon))
-                   [::program :mono-midi-program-event]))))
+                   [::program :mono-midi-program-event])
+       instr)))

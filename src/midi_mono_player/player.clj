@@ -17,8 +17,8 @@
    :type type})
 
 (defn get-midi-defs
-  "for each of the switches get the control meta-data from the play-fn and compute the
-offset, range, symbol and type to use when the event occurs "
+  "for each of the switches get the control meta-data from the play-fn and
+  compute the offset, range, symbol and type to use when the event occurs "
   [play-fn switches]
   (if switches
     (apply merge
@@ -47,7 +47,7 @@ offset, range, symbol and type to use when the event occurs "
 (defn discreet-change [p]
   (let [s (keyword (:name p))
         val (inc-switch p)]
-    ;;(println "discreet-change " p)
+    (println "discreet-change " p)
     (fire-event s val)
     [s val]))
 
@@ -72,14 +72,19 @@ offset, range, symbol and type to use when the event occurs "
            cc-events    (get-midi-defs play-fn (:control-change midi-map))
            pc-switches  (get-midi-defs play-fn (:program-change midi-map))]
 
-       ;;(println "device-key: " device-key " cc-event-key: " cc-event-key)
+       (println "device-key: " device-key " cc-event-key: " cc-event-key)
+       (doseq [e cc-events](println "cc-event: " e))
+
 
        "note-on events send the new note to the synth and save that as the last-note played"
        (e/on-event on-event-key (fn [{note :note velocity :velocity}]
                                   (let [amp (float (/ velocity 127))]
-                                    (with-inactive-node-modification-error :silent
-                                      ;;(println "note = " note " amp = "amp " velocity = " velocity)
-                                      (node-control synth [:note note :amp amp :velocity velocity]))
+                                    (with-inactive-node-modification-error
+                                      :silent
+                                      ;;(println "note = " note " amp = "amp
+                                      ;;         " velocity = " velocity)
+                                      (node-control synth [:note note :amp amp
+                                                           :velocity velocity]))
                                     (swap! last-note* assoc
                                            :note* note)))
                    on-key)
@@ -98,24 +103,31 @@ last-note is note affected until a new note-on event occurs.
 "
        (e/on-event pb-event-key (fn [{dummy :note bend :velocity}]
                                   (if-let [raw-note (:note* @last-note*)]
-                                    (let [note (+ raw-note (* bend-factor (- bend central-bend-point)))]
-                                      (with-inactive-node-modification-error :silent
-                                        ;;(println "bend: " bend " new note: " note)
+                                    (let [note (+ raw-note
+                                                  (* bend-factor
+                                                     (- bend central-bend-point)))]
+                                      (with-inactive-node-modification-error
+                                        :silent
+                                        (println "bend: " bend
+                                                 " new note: " note)
                                         (node-control synth [:note note])))))
                    pb-key)
 
        "control change events are interpreted based on the midi-map (see test-wx7 for examples).
-All assigned control change events fire events of their own that are used by monitor to
-display the current state"
+All assigned control change events fire events of their own that are
+used by monitor to display the current state"
        (e/on-event cc-event-key (fn [{cc :note velocity :velocity}]
                                   ;;(println "on-event: " cc velocity)
                                   (when-let [p (get cc-events cc)]
                                     (try
                                       (let [amp (float (/ velocity 127))]
-                                        (with-inactive-node-modification-error :silent
-                                          (node-control synth (case (:type p)
-                                                                :continuous (control-vals p amp)
-                                                                :discreet (discreet-change p)))))
+                                        (with-inactive-node-modification-error
+                                          :silent
+                                          (node-control
+                                           synth
+                                           (case (:type p)
+                                             :continuous (control-vals p amp)
+                                             :discreet (discreet-change p)))))
                                       (catch Exception e (println "unexpected cc: " cc))))
                                   )
                    cc-key)
